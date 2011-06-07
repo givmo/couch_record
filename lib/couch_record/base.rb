@@ -3,10 +3,10 @@ module CouchRecord
     include CouchRecord::Types
     include CouchRecord::Query
     include CouchRecord::Persistence
+    include CouchRecord::Validations
 
-    include ActiveModel::Validations
+    include ActiveModel::MassAssignmentSecurity
     extend ActiveModel::Naming
-
     extend ActiveModel::Callbacks
     define_model_callbacks :create, :destroy, :save, :update
 
@@ -30,7 +30,7 @@ module CouchRecord
 
     class << self
       def use_database(db_name)
-        self.database = CouchRecord::Database.new(COUCHDB_SERVER, db_name.to_s)
+        self.database = CouchRecord::Database.new(CouchRecord.server, db_name.to_s)
       end
 
       def property(name, type = String, opts = {})
