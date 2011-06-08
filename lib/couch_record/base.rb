@@ -4,6 +4,8 @@ module CouchRecord
     include CouchRecord::Query
     include CouchRecord::Persistence
     include CouchRecord::Validations
+    include CouchRecord::Associations
+    include CouchRecord::OrmAdapter
 
     include ActiveModel::MassAssignmentSecurity
     extend ActiveModel::Naming

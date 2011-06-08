@@ -8,6 +8,8 @@ module CouchRecord
   autoload :Query, 'couch_record/query'
   autoload :Persistence, 'couch_record/persistence'
   autoload :Validations, 'couch_record/validations'
+  autoload :Associations, 'couch_record/associations'
+  autoload :OrmAdapter, 'couch_record/orm_adapter'
 
   class << self
     def server

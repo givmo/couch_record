@@ -16,9 +16,10 @@ module CouchRecord
 
     end
 
-    class UniquenessValidator < ActiveModel::Validator
+    class UniquenessValidator < ActiveModel::EachValidator
       def validate(record)
-        results = record.class.send("map_by_#{options[:property_name]}", :singular => false)
+        value = record.send(options[:property_name])
+        results = record.class.send("map_by_#{options[:property_name]}", value, :singular => false)
         results.empty? || ( results.length == 1 && results[0]['id'] == record.id)
       end
     end

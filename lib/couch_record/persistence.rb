@@ -2,11 +2,11 @@ module CouchRecord
   module Persistence
     extend ActiveSupport::Concern
 
-    def save
+    def save(options = {})
       self.new? ? create : update
     end
 
-    def create
+    def create(options = {})
       return false unless valid?
       _run_create_callbacks do
         _run_save_callbacks do
@@ -22,7 +22,7 @@ module CouchRecord
       end
     end
 
-    def update
+    def update(options = {})
       return false unless valid?
       _run_update_callbacks do
         _run_save_callbacks do
