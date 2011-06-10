@@ -7,10 +7,33 @@ module CouchRecord
     include CouchRecord::Associations
     include CouchRecord::OrmAdapter
 
+    include ActiveModel::Dirty
     include ActiveModel::MassAssignmentSecurity
     extend ActiveModel::Naming
     extend ActiveModel::Callbacks
     define_model_callbacks :create, :destroy, :save, :update
+
+    attr_accessor :parent_record
+
+    def initialize(hash = {}, options = nil)
+      self.parent_record = options[:parent_record] if options && options[:parent_record]
+
+      if options && options[:raw]
+        super(hash)
+      else
+        hash.each_pair do |attr, value|
+          self.send("#{attr}=", value)
+        end
+      end
+    end
+
+    def id
+      if self.parent_record
+        self.parent_record.id
+      else
+        super
+      end
+    end
 
     def to_model
       self
@@ -35,23 +58,45 @@ module CouchRecord
         self.database = CouchRecord::Database.new(CouchRecord.server, db_name.to_s)
       end
 
-      def property(name, type = String, opts = {})
-
-        define_method(name) do
-          value = self[name]
-          if value && !value.is_a?(type)
-            self[name] = value = convert_to_type(value, type)
+      def property(attr, type = String, options = {})
+        unless options.has_key?(:default)
+          if type.is_a? Array
+            options[:default] = []
+          elsif type.is_a? Hash
+            options[:default] = {}
           end
-
-          value = opts[:default] if value.nil?
-          value
         end
 
-        define_method(name.to_s+'=') do |value|
-          if value && !value.is_a?(type)
-            value = convert_to_type(value, type)
+        define_method(attr) do
+          self[attr] = convert_to_type(self[attr], type)
+
+          if self[attr].nil?
+            self[attr] = options[:default].duplicable? ? options[:default].clone : options[:default]
           end
-          self[name] = value
+
+          self[attr]
+        end
+
+        define_method("#{attr}=") do |value|
+          value = convert_to_type(value, type)
+          attribute_will_change!(attr) unless self[attr] == value
+          self[attr] = value
+        end
+
+        define_method("#{attr}_changed?") do
+          attribute_changed?(attr)
+        end
+
+        define_method("#{attr}_change") do
+          attribute_change(attr)
+        end
+
+        define_method("#{attr}_was") do
+          attribute_was(attr)
+        end
+
+        define_method("#{attr}_changed?") do
+          attribute_changed?(attr)
         end
 
       end

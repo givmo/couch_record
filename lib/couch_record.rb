@@ -14,7 +14,7 @@ module CouchRecord
   class << self
     def server
       @server ||= begin
-        couchdb_config = YAML::load(ERB.new(IO.read(Rails.root.to_s + "/config/couchdb.yml")).result)
+        couchdb_config = YAML::load(ERB.new(IO.read("#{Rails.root}/config/couchdb.yml")).result)
         couchdb_config = couchdb_config[Rails.env] if defined?(Rails) && Rails.env
         url = couchdb_config["url"]
         CouchRest.new url

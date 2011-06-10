@@ -8,7 +8,7 @@ module CouchRecord
       doc = if /^_design/ =~ result["_id"]
         Design.new(result)
       else
-        type.new(result)
+        type.new(result, :raw => true)
       end
       doc.database = self
       doc

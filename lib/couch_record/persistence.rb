@@ -3,11 +3,11 @@ module CouchRecord
     extend ActiveSupport::Concern
 
     def save(options = {})
-      self.new? ? create : update
+      self.new? ? create(options) : update(options)
     end
 
     def create(options = {})
-      return false unless valid?
+      return false if options[:validate] != false && !valid?
       _run_create_callbacks do
         _run_save_callbacks do
           if self.class._save_timestamps?
@@ -20,10 +20,13 @@ module CouchRecord
           result["ok"]
         end
       end
+      @changed_attributes.clear
     end
 
     def update(options = {})
-      return false unless valid?
+      return false if options[:validate] != false && !self.valid?
+      return true if options[:force] != true && !self.changed?
+
       _run_update_callbacks do
         _run_save_callbacks do
           if self.class._save_timestamps?
@@ -34,6 +37,7 @@ module CouchRecord
           result["ok"]
         end
       end
+      @changed_attributes.clear
     end
 
     def destroy

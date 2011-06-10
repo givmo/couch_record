@@ -9,17 +9,15 @@ module CouchRecord
 
     module ClassMethods
 
-      def validates_uniqueness_of(property_name, options = {})
-        options[:property_name] = property_name
-        validates_with(UniquenessValidator, options)
+      def validates_uniqueness_of(*attr_names)
+        validates_with(UniquenessValidator, _merge_attributes(attr_names))
       end
 
     end
 
     class UniquenessValidator < ActiveModel::EachValidator
-      def validate(record)
-        value = record.send(options[:property_name])
-        results = record.class.send("map_by_#{options[:property_name]}", value, :singular => false)
+      def validate_each(record, attribute, value)
+        results = record.class.send("map_by_#{attribute}", value, :singular => false, :limit => 2)
         results.empty? || ( results.length == 1 && results[0]['id'] == record.id)
       end
     end
