@@ -23,7 +23,7 @@ module CouchRecord
           singular = params.delete :singular
           params[:limit] = 1 if singular
 
-          results = database.view(view_path, params)[rows]
+          results = database.view(view_path, params)['rows']
           if convert
             results.map! { |row| self.new(row['doc'], :raw => true) }
           end
@@ -50,6 +50,12 @@ module CouchRecord
             params.merge! arg
           else
             params[:key] = arg
+          end
+        end
+
+        if params.delete(:case_insensitive)
+          [:key, :startkey, :endkey].each do |key|
+            params[key].downcase! if params.has_key? key
           end
         end
 
