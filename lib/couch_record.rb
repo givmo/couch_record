@@ -11,6 +11,8 @@ module CouchRecord
   autoload :Associations, 'couch_record/associations'
   autoload :OrmAdapter, 'couch_record/orm_adapter'
 
+  require 'couch_record/railtie' if defined?(Rails)
+
   class << self
     def server
       @server ||= begin
