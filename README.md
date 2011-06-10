@@ -54,7 +54,7 @@ Each property declaration creates a getter and setter for the property that hand
 All queries are explicitly declared, just like the way CouchDB works.  CouchRecord provides 3 ways to create querying methods on the record class:
 
 - find_by - generates a query method that returns records of the model class, using the
-- map_by -
+- view_by -
     find_by :name, :design_doc => 'by_name', :view_name => 'by_name'
 
 
