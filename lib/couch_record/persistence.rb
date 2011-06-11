@@ -10,14 +10,8 @@ module CouchRecord
       return false if options[:validate] != false && !valid?
       _run_create_callbacks do
         _run_save_callbacks do
-          if self.class._save_timestamps?
-            now = Time.now
-            self.created_at = now
-            self.updated_at = now
-          end
-          convert_for_save(self)
-          result = database.save_doc(self)
-          result["ok"]
+          set_timestamps(:create)
+          _do_save
         end
       end
       @changed_attributes.clear
@@ -29,15 +23,16 @@ module CouchRecord
 
       _run_update_callbacks do
         _run_save_callbacks do
-          if self.class._save_timestamps?
-            self.updated_at = Time.now
-          end
-          convert_for_save(self)
-          result = database.save_doc(self)
-          result["ok"]
+          set_timestamps
+          _do_save
         end
       end
       @changed_attributes.clear
+    end
+
+    def update_attributes(attributes)
+      set_attributes(attributes)
+      save
     end
 
     def destroy
@@ -47,11 +42,21 @@ module CouchRecord
       end
     end
 
-    private
-
-    def do_save
+    def set_timestamps(which = :update)
+      if self.class._save_timestamps?
+        now = Time.now
+        self.created_at = now if which == :create
+        self.updated_at = now
+      end
     end
 
+    def _do_save
+      # set any defaults
+      _defaulted_properties.each { |attr| self.send(attr) }
+      convert_for_save(self)
+      result = database.save_doc(self)
+      result["ok"]
+    end
 
 
   end

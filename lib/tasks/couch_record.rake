@@ -46,7 +46,8 @@ namespace :couch_record do
       end
 
       # delete views that no longer exist
-      deleted_views = (File.readlines CouchRestRails.deleted_views_file).each { |l| l.strip! }
+      deleted_views_file = 'db/deleted_couch_views'
+      deleted_views = (File.readlines deleted_views_file).each { |l| l.strip! }
       deleted_views.each do |view_file|
         view_file = view_file.sub! "#{db_name}/", ''
         if view_file

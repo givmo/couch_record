@@ -21,7 +21,7 @@ module CouchRecord
         Date.iso8601 value
       elsif type == Integer
         value.to_i
-      elsif type <= CouchRecord::Base
+      elsif type < CouchRecord::Base
         type.new value, :parent_record => self, :raw => true
       else
         type.new value
@@ -38,7 +38,7 @@ module CouchRecord
       elsif value.is_a?(BigDecimal)
         value.to_s('F')
       elsif value.is_a?(Array)
-        value.map!(value) { |subval| convert_for_save(subval) }
+        value.map! { |subval| convert_for_save(subval) }
       elsif value.is_a?(Hash)
         value.merge!(value) { |key, subval, subval2| convert_for_save(subval) }
       else

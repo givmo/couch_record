@@ -15,15 +15,13 @@ module CouchRecord
 
     attr_accessor :parent_record
 
-    def initialize(hash = {}, options = nil)
+    def initialize(attributes = {}, options = nil)
       self.parent_record = options[:parent_record] if options && options[:parent_record]
 
       if options && options[:raw]
-        super(hash)
+        super(attributes)
       else
-        hash.each_pair do |attr, value|
-          self.send("#{attr}=", value)
-        end
+        set_attributes(attributes)
       end
     end
 
@@ -40,6 +38,11 @@ module CouchRecord
     end
 
     def to_key
+      # this is a hack for FormHelper because it expects an Array
+      def id.join(delim)
+        self
+      end
+
       id
     end
 
@@ -53,17 +56,28 @@ module CouchRecord
       !new?
     end
 
+    def set_attributes(attributes)
+      attributes.each_pair do |attr, value|
+        self.send("#{attr}=", value)
+      end
+    end
+
     class << self
+
       def use_database(db_name)
         self.database = CouchRecord::Database.new(CouchRecord.server, db_name.to_s)
       end
 
       def property(attr, type = String, options = {})
-        unless options.has_key?(:default)
+        if options.has_key?(:default)
+          _defaulted_properties << attr
+        else
           if type.is_a? Array
             options[:default] = []
           elsif type.is_a? Hash
             options[:default] = {}
+          elsif type < CouchRecord::Base
+            options[:default] = type.new
           end
         end
 
@@ -109,6 +123,10 @@ module CouchRecord
 
       def _save_timestamps?
         @_save_timestamps
+      end
+
+      def _defaulted_properties
+        @_defaulted_properties ||= []
       end
 
     end
