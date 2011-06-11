@@ -32,11 +32,15 @@ Models should extend CouchRecord::Base.  CouchRecord property declaration syntax
       property :age, Integer, :default => 21
       property :children, [Person]
 
+      timestamps!
+
       find_by :name
       view_by :count, :method_name => 'count_by_name', :design_doc => 'by_name', :view_name => 'name_count'
     end
 
 Each property declaration creates a getter and setter for the property that handle conversion to and from the specified type.
+
+The `timestamps!` declaration creates properties fro created_at and updated_at and sets them on create and update.
 
 ### Supported Types
 
@@ -87,7 +91,7 @@ Since CouchDB reindexes all views in a design doc together, and multiple views i
 The example js file below will create a design doc with 2 views: `by_name` and `name_count`, both using the same map function.
 
     map = function(doc) {
-        if (doc['couchrest-type'] == 'Person' && doc['name'] != null) {
+        if (doc['name'] != null) {
             emit(doc['name'].toLowerCase(), 1);
         }
     };
