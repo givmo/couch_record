@@ -10,6 +10,7 @@ module CouchRecord
   autoload :Validations, 'couch_record/validations'
   autoload :Associations, 'couch_record/associations'
   autoload :OrmAdapter, 'couch_record/orm_adapter'
+  autoload :TrackableContainer, 'couch_record/trackable_container'
 
   require 'couch_record/railtie' if defined?(Rails)
 

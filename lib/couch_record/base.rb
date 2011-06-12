@@ -1,54 +1,4 @@
 module CouchRecord
-  module TrackableArray
-    attr_accessor :parent_record
-    attr_accessor :parent_attr
-
-    def []=(key, value)
-      _make_trackable(value, key)
-      _track_change(key, value)
-      super
-    end
-
-    def _track_change(key, value)
-      if self.is_a?(CouchRecord::Base)
-        self.attribute_will_change_to!(key, value)
-      else
-        # passing nil here works because the current value must be non nil for self to exist
-        self.parent_record.attribute_will_change_to!(self.parent_attr, nil)
-      end
-    end
-
-    def _make_trackable(value, attr)
-      newly_trackable = false
-      if value.is_a?(Array) || value.is_a?(Hash)
-        unless value.is_a? TrackableArray
-          value.extend TrackableArray
-          newly_trackable = true
-        end
-      end
-
-      if value.is_a? TrackableArray
-        if self.is_a?(CouchRecord::Base)
-          value.parent_record = self
-          value.parent_attr = attr.to_sym
-        else
-          value.parent_record = self.parent_record
-          value.parent_attr = self.parent_attr
-        end
-
-        if newly_trackable
-          if value.is_a?(Array)
-            value.each { |subvalue| value._make_trackable(subvalue, attr) }
-          elsif value.is_a?(Hash)
-            value.each_value { |subvalue| value._make_trackable(subvalue, attr) }
-          end
-        end
-
-      end
-    end
-
-  end
-
   class Base < CouchRest::Document
     include CouchRecord::Types
     include CouchRecord::Query
@@ -56,7 +6,7 @@ module CouchRecord
     include CouchRecord::Validations
     include CouchRecord::Associations
     include CouchRecord::OrmAdapter
-    include CouchRecord::TrackableArray
+    include CouchRecord::TrackableContainer::TrackableHash
 
     include ActiveModel::Dirty
     include ActiveModel::MassAssignmentSecurity
