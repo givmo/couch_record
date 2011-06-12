@@ -19,10 +19,10 @@ module CouchRecord
 
     def update(options = {})
       return false if options[:validate] != false && !self.valid?
-      return true if options[:force] != true && !self.changed?
 
       _run_update_callbacks do
         _run_save_callbacks do
+          return true if options[:force] != true && !self.changed?
           set_timestamps
           _do_save
         end
@@ -52,7 +52,7 @@ module CouchRecord
 
     def _do_save
       # set any defaults
-      _defaulted_properties.each { |attr| self.send(attr) }
+      self.class._defaulted_properties.each { |attr| self.send(attr) }
       convert_for_save(self)
       result = database.save_doc(self)
       result["ok"]

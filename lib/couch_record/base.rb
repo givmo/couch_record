@@ -1,4 +1,54 @@
 module CouchRecord
+  module TrackableArray
+    attr_accessor :parent_record
+    attr_accessor :parent_attr
+
+    def []=(key, value)
+      _make_trackable(value, key)
+      _track_change(key, value)
+      super
+    end
+
+    def _track_change(key, value)
+      if self.is_a?(CouchRecord::Base)
+        self.attribute_will_change_to!(key, value)
+      else
+        # passing nil here works because the current value must be non nil for self to exist
+        self.parent_record.attribute_will_change_to!(self.parent_attr, nil)
+      end
+    end
+
+    def _make_trackable(value, attr)
+      newly_trackable = false
+      if value.is_a?(Array) || value.is_a?(Hash)
+        unless value.is_a? TrackableArray
+          value.extend TrackableArray
+          newly_trackable = true
+        end
+      end
+
+      if value.is_a? TrackableArray
+        if self.is_a?(CouchRecord::Base)
+          value.parent_record = self
+          value.parent_attr = attr.to_sym
+        else
+          value.parent_record = self.parent_record
+          value.parent_attr = self.parent_attr
+        end
+
+        if newly_trackable
+          if value.is_a?(Array)
+            value.each { |subvalue| value._make_trackable(subvalue, attr) }
+          elsif value.is_a?(Hash)
+            value.each_value { |subvalue| value._make_trackable(subvalue, attr) }
+          end
+        end
+
+      end
+    end
+
+  end
+
   class Base < CouchRest::Document
     include CouchRecord::Types
     include CouchRecord::Query
@@ -6,6 +56,7 @@ module CouchRecord
     include CouchRecord::Validations
     include CouchRecord::Associations
     include CouchRecord::OrmAdapter
+    include CouchRecord::TrackableArray
 
     include ActiveModel::Dirty
     include ActiveModel::MassAssignmentSecurity
@@ -13,16 +64,25 @@ module CouchRecord
     extend ActiveModel::Callbacks
     define_model_callbacks :create, :destroy, :save, :update
 
-    attr_accessor :parent_record
-
     def initialize(attributes = {}, options = nil)
-      self.parent_record = options[:parent_record] if options && options[:parent_record]
+      if options && options[:parent_record]
+        self.parent_record = options[:parent_record]
+      end
+
+      @_track_changes = true
 
       if options && options[:raw]
-        super(attributes)
+        _dont_track_changes { super(attributes) }
       else
         set_attributes(attributes)
       end
+
+    end
+
+    def _dont_track_changes
+      @_track_changes = false
+      yield
+      @_track_changes = true
     end
 
     def id
@@ -39,11 +99,7 @@ module CouchRecord
 
     def to_key
       # this is a hack for FormHelper because it expects an Array
-      def id.join(delim)
-        self
-      end
-
-      id
+      JoinableString.new id
     end
 
     # Returns a string representing the object's key suitable for use in URLs,
@@ -56,9 +112,33 @@ module CouchRecord
       !new?
     end
 
+    def attribute_will_change_to!(attr, to)
+      if @_track_changes && !attribute_changed?(attr) && self[attr] != to
+        attribute_will_change!(attr)
+        self.parent_record.attribute_will_change_to!(self.parent_attr, nil) if self.parent_record
+      end
+    end
+
+
     def set_attributes(attributes)
       attributes.each_pair do |attr, value|
         self.send("#{attr}=", value)
+      end
+    end
+
+    def _default_value(type, options)
+      if options.has_key?(:default)
+        # explicit defaults
+        options[:default].duplicable? ? options[:default].clone : options[:default]
+      else
+        # implicit defaults
+        if type.is_a? Array
+          []
+        elsif type < CouchRecord::Base
+          type.new nil, :parent_record => self
+        elsif type == Hash
+          {}
+        end
       end
     end
 
@@ -69,23 +149,16 @@ module CouchRecord
       end
 
       def property(attr, type = String, options = {})
-        if options.has_key?(:default)
-          _defaulted_properties << attr
-        else
-          if type.is_a? Array
-            options[:default] = []
-          elsif type.is_a? Hash
-            options[:default] = {}
-          elsif type < CouchRecord::Base
-            options[:default] = type.new
-          end
-        end
+        _defaulted_properties << attr if options.has_key?(:default)
 
         define_method(attr) do
-          self[attr] = convert_to_type(self[attr], type)
+          _dont_track_changes do
+            self[attr] = convert_to_type(self[attr], type)
 
-          if self[attr].nil?
-            self[attr] = options[:default].duplicable? ? options[:default].clone : options[:default]
+            if self[attr].nil?
+              default = _default_value(type, options)
+              self.send("#{attr}=", default) unless default.nil?
+            end
           end
 
           self[attr]
@@ -93,7 +166,7 @@ module CouchRecord
 
         define_method("#{attr}=") do |value|
           value = convert_to_type(value, type)
-          attribute_will_change!(attr) unless self[attr] == value
+#          attribute_will_change_to!(attr, value)
           self[attr] = value
         end
 
@@ -132,4 +205,11 @@ module CouchRecord
     end
 
   end
+
+  class JoinableString < String
+    def join(sep = $,)
+      self
+    end
+  end
+
 end

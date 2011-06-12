@@ -129,6 +129,11 @@ To push the views in db/couch/ to your databases and delete the views in db/dele
 - record.{attr}_was
 - record.{attr}_change
 
+The sementics of these calls are slightly different than those in ActiveRecord.
+We don't clear the list of changed attributes until *after* all the after_* callbacks are finished.
+This means you can easily see what's changed in your after_* callbacks instead of having to look in `previous_changes`.
+It also means if you change attribute values in your after_* callbacks, they won't get marked as dirty, so don't do that.
+
 ### ActiveModel::Callbacks
 
 :before, :after, and :around for :create, :destroy, :save, and :update
