@@ -248,11 +248,12 @@ module CouchRecord
         _make_children_trackable
       end
 
-      def update(other_hash)
-        _track_change
-        super
-        _make_children_trackable
-      end
+      # We can't use update because we need it for persistence
+#      def update(other_hash)
+#        _track_change
+#        super
+#        _make_children_trackable
+#      end
 
     end
   end

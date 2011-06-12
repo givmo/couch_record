@@ -22,7 +22,7 @@ module CouchRecord
       elsif type == Integer
         value.to_i
       elsif type < CouchRecord::Base
-        type.new value, :parent_record => self, :raw => true
+        type.new value, :parent_record => self, :raw => @_raw
       else
         type.new value
       end

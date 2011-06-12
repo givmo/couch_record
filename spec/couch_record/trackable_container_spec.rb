@@ -101,12 +101,6 @@ describe CouchRecord::TrackableContainer do
       end
     end
 
-    describe 'update' do
-      it 'should mark the propery and the record as dirty' do
-        @r.d.update({:y => [], :z => []})
-      end
-    end
-
   end
 
   describe 'Array' do

@@ -61,14 +61,12 @@ All queries are explicitly declared, just like the way CouchDB works.  CouchReco
 - **view_by** - generates a query method that returns raw rows from the database
 - **find_by** - generates a query method that returns records of the model class, using the :include_docs query parameter
 
-    find_by :name, :singular => true
-
 Options
 
 - **:design_doc** - defaults to "by_#{name}"
 - **:view_name** - defaults to "by_#{name}"
 - **:singular** - sets :limit => 1 on the query and returns the first row or record instead of an array
-- **:case_insensitive** - downcases :key, :startkey, and :endkey when passed as parameters to the query method.  You're responsible for making sure your view doncases the values being indexed.
+- **:case_insensitive** - downcases :key, :startkey, and :endkey when passed as parameters to the query method.  You're responsible for making sure your view downcases the values being indexed.
 - any other options are passed as parameters on the query, so you can use :limit, :descending, etc.
 
 

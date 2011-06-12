@@ -31,8 +31,8 @@ module CouchRecord
     end
 
     def update_attributes(attributes)
-      set_attributes(attributes)
-      save
+      self.attributes = attributes
+      self.save
     end
 
     def destroy
@@ -55,7 +55,7 @@ module CouchRecord
       self.class._defaulted_properties.each { |attr| self.send(attr) }
       convert_for_save(self)
       result = database.save_doc(self)
-      result["ok"]
+      result['ok']
     end
 
 

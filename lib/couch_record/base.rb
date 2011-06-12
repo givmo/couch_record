@@ -14,25 +14,29 @@ module CouchRecord
     extend ActiveModel::Callbacks
     define_model_callbacks :create, :destroy, :save, :update
 
-    def initialize(attributes = {}, options = nil)
+    def initialize(attributes = nil, options = nil)
       if options && options[:parent_record]
         self.parent_record = options[:parent_record]
       end
 
-      @_track_changes = true
+      @_raw = false
 
-      if options && options[:raw]
-        _dont_track_changes { super(attributes) }
-      else
-        set_attributes(attributes)
+      if (attributes)
+        if options && options[:raw]
+          _raw { super(attributes) }
+        else
+          self.attributes = attributes
+        end
       end
 
     end
 
-    def _dont_track_changes
-      @_track_changes = false
+    def _raw
+      @_old_raw ||= []
+      @_old_raw.push @_raw
+      @_raw = true
       yield
-      @_track_changes = true
+      @_raw = @_old_raw.pop
     end
 
     def id
@@ -63,14 +67,21 @@ module CouchRecord
     end
 
     def attribute_will_change_to!(attr, to)
-      if @_track_changes && !attribute_changed?(attr) && self[attr] != to
-        attribute_will_change!(attr)
+      if !@_raw && !attribute_changed?(attr) && self[attr] != to
+        begin
+          value = self[attr]
+          value = value.duplicable? ? value.clone : value
+        rescue TypeError, NoMethodError
+        end
+
+        changed_attributes[attr] = value
         self.parent_record.attribute_will_change_to!(self.parent_attr, nil) if self.parent_record
       end
     end
 
 
-    def set_attributes(attributes)
+    def attributes=(attributes)
+      attributes = self.sanitize_for_mass_assignment(attributes) unless @_raw
       attributes.each_pair do |attr, value|
         self.send("#{attr}=", value)
       end
@@ -102,7 +113,7 @@ module CouchRecord
         _defaulted_properties << attr if options.has_key?(:default)
 
         define_method(attr) do
-          _dont_track_changes do
+          _raw do
             self[attr] = convert_to_type(self[attr], type)
 
             if self[attr].nil?

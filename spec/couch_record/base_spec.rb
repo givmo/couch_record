@@ -1,5 +1,8 @@
+require 'couchrest'
+require 'couchrest/rest_api'
 require 'couch_record'
 require 'bigdecimal'
+require 'rspec'
 
 def check_values(a)
   a.s.should == @str_values[:s]
@@ -19,13 +22,13 @@ def set_values(a)
   a.bd = @str_values[:bd]
 end
 
+def disable_save(a)
+#  a.stub_chain(:database, :save_doc).and_return({'ok' => true})
+end
+
 describe CouchRecord::Base do
-  COUCHDB_SERVER = CouchRest.new 'https://dustbyrn-test:igivmomv@dustbyrn-test.cloudant.com'
 
   before :all do
-    COUCHDB_SERVER.database('tests').delete!
-    COUCHDB_SERVER.database! 'tests'
-
     @str_values = {
         :s => 'string',
         :i => '123',
@@ -36,7 +39,8 @@ describe CouchRecord::Base do
     }
 
     class Record < CouchRecord::Base
-      use_database :tests
+      use_database :test
+
       property :x
       property :s, String
       property :i, Integer
@@ -48,15 +52,17 @@ describe CouchRecord::Base do
 
       timestamps!
     end
+
+  end
+
+  before :each do
+    CouchRest.stub!(:put).and_return({'ok' => true, 'rev' => '1-12345', 'id' => '54321'})
+    CouchRest.stub!(:post).and_return({'ok' => true, 'rev' => '2-12345', 'id' => '54321'})
+    CouchRecord.server.stub!(:next_uuid).and_return('54321')
   end
 
 
   describe 'property' do
-    it 'should convert strings to the declared types via setters' do
-      a = Record.new
-      set_values(a)
-      check_values(a)
-    end
 
     it 'should return default values instead of nils' do
       a = Record.new
@@ -64,38 +70,24 @@ describe CouchRecord::Base do
     end
   end
 
-  it 'should convert strings to the declared types via getters' do
-    a = Record.new(@str_values)
-    check_values(a)
-  end
 
   describe 'create' do
     it 'should create a record and save data' do
+      CouchRest.should_receive(:put)
       a = Record.new(@str_values)
       a.create
       a.id.should_not == nil
-      b = Record.find a.id
-      check_values(b)
     end
 
   end
 
   describe 'update' do
     it 'should save data' do
+      CouchRest.should_receive(:put).twice
       a = Record.new
       a.create
       set_values(a)
       a.update
-      b = Record.find a.id
-      check_values(b)
-    end
-
-
-    it 'should not save default values' do
-      a = Record.new
-      a.create
-      a = Record.find a.id
-      a[:defaulted].should == nil
     end
 
   end
@@ -103,6 +95,7 @@ describe CouchRecord::Base do
   describe 'persisted?' do
     it 'should return true for saved records and false for new ones' do
       a = Record.new
+      disable_save(a)
       a.persisted?.should == false
       a.create
       a.persisted?.should == true
@@ -120,6 +113,8 @@ describe CouchRecord::Base do
 
     it 'should set created_at and updated_at' do
       a = Record.new
+      disable_save(a)
+
       before_create = Time.iso8601(Time.now.utc.iso8601)
       a.create
       after_create = Time.iso8601(Time.now.utc.iso8601)
