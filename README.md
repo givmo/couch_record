@@ -62,13 +62,14 @@ The `timestamps!` declaration creates properties for created_at and updated_at a
 - **Array** -  of the above types
 - **Hash** - of the above types
 
-## Persistence
+## Persistence and Mass Assignment
 
     model.create()
     model.update()
     model.save()
-    model.update_attributes(attributes)
+    model.update_attributes(attributes) # uses merge_attributes
     model.attributes = attributes # set attributes without saving
+    model.merge_attributes(attributes) # set attributes and merge values into sub-models
 
 ## Queries
 
@@ -166,6 +167,9 @@ The dirty methods also work with complex types (Array and Hash) and sub-models. 
 
 Then `person.children[2].age_changed?`,  `person.children_changed?`, and  `person.changed?` will all return true.
 No small feat.
+
+Certain modifications will not track changes because it's too complex to track them reliably.
+See CouchRecord::TrackableContainer for which modifiers in Array and Hash track changes.
 
 ### ActiveModel::Callbacks
 

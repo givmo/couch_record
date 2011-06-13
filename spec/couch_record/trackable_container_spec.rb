@@ -5,7 +5,7 @@ describe CouchRecord::TrackableContainer do
   before :all do
     class DirtyTestRecord < CouchRecord::Base
       use_database :test
-      
+
       property :a, [Integer]
       property :b, [Hash]
       property :c, DirtyTestRecord
@@ -17,6 +17,7 @@ describe CouchRecord::TrackableContainer do
 
       def check_dirty
         clean_1_changed?.should == false
+        c.clean_1_changed?.should == false
       end
     end
   end
@@ -44,10 +45,10 @@ describe CouchRecord::TrackableContainer do
   describe 'converting' do
     it 'should not dirty converted values' do
       r = DirtyTestRecord.new(
-        {
-            :clean_1 => '2011-06-13'
-        },
-        :raw => true)
+          {
+              :clean_1 => '2011-06-13'
+          },
+          :raw => true)
 
       r.clean_1
       r.clean_1_changed?.should == false
@@ -56,14 +57,12 @@ describe CouchRecord::TrackableContainer do
 
   describe 'saving' do
     it 'should not dirty converted values' do
-      r = DirtyTestRecord.new(
-        {
-            :clean_1 => '2011-06-13'
-        },
-        :raw => true)
+      r = DirtyTestRecord.new({:clean_1 => '2011-06-13', :c => {:clean_1 => '2011-06-13'}},
+                              :raw => true)
 
       r.a = []
       r.clean_1
+      r.c.clean_1
       r.save #this should trigger the check_dirty callback and check clean_1
     end
   end

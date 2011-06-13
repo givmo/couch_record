@@ -31,7 +31,7 @@ module CouchRecord
     end
 
     def update_attributes(attributes)
-      self.attributes = attributes
+      self.merge_attributes(attributes)
       self.save
     end
 

@@ -88,6 +88,13 @@ module CouchRecord
       end
     end
 
+    def merge_attributes(attributes)
+      attributes = self.sanitize_for_mass_assignment(attributes) unless @_raw
+      attributes.each_pair do |attr, value|
+        self.send("#{attr}_merge", value)
+      end
+    end
+
     def _default_value(type, options)
       if options.has_key?(:default)
         # explicit defaults
@@ -127,9 +134,34 @@ module CouchRecord
         end
 
         define_method("#{attr}=") do |value|
-          value = convert_to_type(value, type)
-#          attribute_will_change_to!(attr, value)
-          self[attr] = value
+          self[attr] = convert_to_type(value, type)
+        end
+
+        define_method("#{attr}_merge") do |value|
+          current = self.send attr
+          if current && value && !type.is_a?(Array) && type < CouchRecord::Base
+            current.merge_attributes(value)
+          elsif current && value && type.is_a?(Array) && type[0] < CouchRecord::Base
+            value.each_with_index do |subval, i|
+              if current[i] && subval
+                current[i].merge_attributes(subval)
+              else
+                current[i] = convert_to_type(subval, type[0])
+              end
+            end
+          elsif current && value && type == Hash
+            value.each_pair do |key, subval|
+              if current[key] && subval && current[key].respond_to?(:merge_attributes)
+                current[key].merge_attributes(subval)
+              else
+                current[key] = subval
+              end
+            end
+          else
+            self[attr] = convert_to_type(value, type)
+          end
+
+          self[attr]
         end
 
         define_method("#{attr}_changed?") do

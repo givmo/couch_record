@@ -80,21 +80,21 @@ module CouchRecord
     module TrackableHash
       include TrackableContainer
 
-      def []=(key, value)
-        _make_trackable(value, key)
-        _track_change(key, value)
-        super
-      end
-
-      def clear
-        _track_change
-        super
-      end
-
-      def delete(key)
-        _track_change(key)
-        super
-      end
+#      def []=(key, value)
+#        _make_trackable(value, key)
+#        _track_change(key, value)
+#        super
+#      end
+#
+#      def clear
+#        _track_change
+#        super
+#      end
+#
+#      def delete(key)
+#        _track_change(key)
+#        super
+#      end
 
     end
   end

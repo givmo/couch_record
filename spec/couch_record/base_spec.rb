@@ -48,7 +48,6 @@ describe CouchRecord::Base do
   end
 
   describe 'property' do
-
     it 'should return default values instead of nils' do
       a = Record.new
       a.defaulted.should == 'a default'
@@ -109,5 +108,57 @@ describe CouchRecord::Base do
       a.updated_at.should be_between(after_create, after_update)
     end
   end
+
+  describe 'merge_atributes' do
+    before :all do
+      class MergeRecord < CouchRecord::Base
+        property :x, Integer
+        property :y, Integer
+        property :a, MergeRecord
+        property :b, [MergeRecord]
+        property :c, Hash
+      end
+    end
+
+    before :each do
+      @r = MergeRecord.new(
+          {
+              :x => 1,
+              :y => 1,
+              :a => {:x => 2, :y => 2},
+              :b => [{:x => 3, :y => 3}, {:x => 4, :y => 4}, {:x => 5, :y => 5}],
+              :c => {:d => MergeRecord.new({:x => 6, :y => 6}, :raw => true), :e => MergeRecord.new({:x => 7, :y => 7}, :raw => true)}
+          }, :raw => true
+      )
+    end
+
+    it 'should only set passed attributes' do
+      @r.merge_attributes(
+          {
+              :x => 0,
+              :a => {:x => 0},
+              :b => [{:x => 0}, {}],
+              :c => {:d => {:x => 0}}
+          })
+      
+      @r.x.should == 0
+      @r.y.should == 1
+      @r.a.x.should == 0
+      @r.a.y.should == 2
+
+      @r.b[0].x.should == 0
+      @r.b[0].y.should == 3
+      @r.b[1].x.should == 4
+      @r.b[1].y.should == 4
+      @r.b[2].x.should == 5
+      @r.b[2].y.should == 5
+
+      @r.c[:d].x.should == 0
+      @r.c[:d].y.should == 6
+      @r.c[:e].x.should == 7
+      @r.c[:e].y.should == 7
+    end
+  end
+
 
 end
