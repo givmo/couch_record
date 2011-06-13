@@ -29,20 +29,22 @@ module CouchRecord
     end
 
     def convert_for_save(value)
-      if value.nil? || value.is_a?(String) || value.is_a?(Integer) || value.is_a?(TrueClass) || value.is_a?(FalseClass)
-        value
-      elsif value.is_a?(Time)
-        value.utc.iso8601
-      elsif value.is_a?(Date)
-        value.iso8601
-      elsif value.is_a?(BigDecimal)
-        value.to_s('F')
-      elsif value.is_a?(Array)
-        value.map! { |subval| convert_for_save(subval) }
-      elsif value.is_a?(Hash)
-        value.merge!(value) { |key, subval, subval2| convert_for_save(subval) }
-      else
-        value.to_s
+      _raw do
+        if value.nil? || value.is_a?(String) || value.is_a?(Integer) || value.is_a?(TrueClass) || value.is_a?(FalseClass)
+          value
+        elsif value.is_a?(Time)
+          value.utc.iso8601
+        elsif value.is_a?(Date)
+          value.iso8601
+        elsif value.is_a?(BigDecimal)
+          value.to_s('F')
+        elsif value.is_a?(Array)
+          value.map! { |subval| convert_for_save(subval) }
+        elsif value.is_a?(Hash)
+          value.merge!(value) { |key, subval, subval2| convert_for_save(subval) }
+        else
+          value.to_s
+        end
       end
     end
 

@@ -48,7 +48,7 @@ Models should extend CouchRecord::Base.  CouchRecord property declaration syntax
 
 Each property declaration creates a getter and setter for the property that handle conversion to and from the specified type.
 
-The `timestamps!` declaration creates properties fro created_at and updated_at and sets them on create and update.
+The `timestamps!` declaration creates properties for created_at and updated_at and sets them on create and update.
 
 ### Supported Types
 
@@ -61,6 +61,14 @@ The `timestamps!` declaration creates properties fro created_at and updated_at a
 - other models that extend **CouchRecord::Base**
 - **Array** -  of the above types
 - **Hash** - of the above types
+
+## Persistence
+
+    model.create()
+    model.update()
+    model.save()
+    model.update_attributes(attributes)
+    model.attributes = attributes # set attributes without saving
 
 ## Queries
 

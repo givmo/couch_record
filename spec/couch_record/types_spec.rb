@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe 'CouchRecord::Types' do
   before :all do
     @attributes = {

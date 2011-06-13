@@ -35,8 +35,9 @@ module CouchRecord
       @_old_raw ||= []
       @_old_raw.push @_raw
       @_raw = true
-      yield
+      result = yield
       @_raw = @_old_raw.pop
+      result
     end
 
     def id

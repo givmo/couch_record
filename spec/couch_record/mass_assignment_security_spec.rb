@@ -1,5 +1,4 @@
-require 'rspec'
-require 'couch_record'
+require 'spec_helper'
 
 describe 'CouchRecord::MassAssignmentSecurity' do
   before :all do

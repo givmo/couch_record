@@ -1,25 +1,33 @@
-require 'rspec'
-require 'couch_record'
+require 'spec_helper'
 
 describe CouchRecord::TrackableContainer do
 
   before :all do
-    class Record < CouchRecord::Base
+    class DirtyTestRecord < CouchRecord::Base
+      use_database :test
+      
       property :a, [Integer]
       property :b, [Hash]
-      property :c, Record
+      property :c, DirtyTestRecord
       property :d, Hash
-      timestamps!
+
+      property :clean_1, Date
+
+      after_save :check_dirty
+
+      def check_dirty
+        clean_1_changed?.should == false
+      end
     end
   end
 
   before :each do
-    @r = Record.new(
+    @r = DirtyTestRecord.new(
         {
             :a => [1, 2, 3],
             :b => [{}, {}, {:x => 3}],
             :c => {:a => [1]},
-            :d => {:x => Record.new({:a => 1}, :raw => true), :x => Record.new({:a => 1}, :raw => true)}
+            :d => {:x => DirtyTestRecord.new({:a => 1}, :raw => true), :y => DirtyTestRecord.new({:a => 1}, :raw => true)}
         },
         :raw => true)
 
@@ -30,6 +38,34 @@ describe CouchRecord::TrackableContainer do
     @r.c.a_changed?.should == false
     @r.d_changed?.should == false
     @r.d[:x].a_changed?.should == false
+    @r.d[:y].a_changed?.should == false
+  end
+
+  describe 'converting' do
+    it 'should not dirty converted values' do
+      r = DirtyTestRecord.new(
+        {
+            :clean_1 => '2011-06-13'
+        },
+        :raw => true)
+
+      r.clean_1
+      r.clean_1_changed?.should == false
+    end
+  end
+
+  describe 'saving' do
+    it 'should not dirty converted values' do
+      r = DirtyTestRecord.new(
+        {
+            :clean_1 => '2011-06-13'
+        },
+        :raw => true)
+
+      r.a = []
+      r.clean_1
+      r.save #this should trigger the check_dirty callback and check clean_1
+    end
   end
 
   describe 'Hash' do
@@ -47,12 +83,6 @@ describe CouchRecord::TrackableContainer do
       end
     end
 
-    describe 'store' do
-      it 'should mark the propery and the record as dirty' do
-        @r.d.store(:y, [])
-      end
-    end
-
     describe 'clear' do
       it 'should mark the propery and the record as dirty' do
         @r.d.clear
@@ -62,42 +92,6 @@ describe CouchRecord::TrackableContainer do
     describe 'delete' do
       it 'should mark the propery and the record as dirty' do
         @r.d.delete :y
-      end
-    end
-
-    describe 'delete_if' do
-      it 'should mark the propery and the record as dirty' do
-        @r.d.delete_if {|key, value| key == :y }
-      end
-    end
-
-    describe 'reject!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.d.reject! {|key, value| key == :y }
-      end
-    end
-
-    describe 'replace' do
-      it 'should mark the propery and the record as dirty' do
-        @r.d.replace({:z => []})
-      end
-    end
-
-    describe 'keep_if' do
-      it 'should mark the propery and the record as dirty' do
-        @r.d.keep_if {|key, value| key == :y }
-      end
-    end
-
-    describe 'select!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.d.select! {|key, value| key == :y }
-      end
-    end
-
-    describe 'merge!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.d.merge!({:y => [], :z => []})
       end
     end
 
@@ -143,27 +137,6 @@ describe CouchRecord::TrackableContainer do
       end
     end
 
-    describe 'map!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.map! { |i| 0 }
-        @r.b.map! { |i| {} }
-      end
-    end
-
-    describe 'collect!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.collect! { |i| 0 }
-        @r.b.collect! { |i| {} }
-      end
-    end
-
-    describe 'compact!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.compact!
-        @r.b.compact!
-      end
-    end
-
     describe 'delete_at' do
       it 'should mark the propery and the record as dirty' do
         @r.a.delete_at 1
@@ -171,136 +144,10 @@ describe CouchRecord::TrackableContainer do
       end
     end
 
-    describe 'delete' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.delete 1
-        @r.b.delete({})
-      end
-    end
-
-    describe 'delete_if' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.delete_if { |x| x == 2 }
-        @r.b.delete_if { |x| x.empty? }
-      end
-    end
-
-    describe 'reject!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.reject! { |x| x == 2 }
-        @r.b.reject! { |x| x.empty? }
-      end
-    end
-
-    describe 'fill' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.fill { |i| 2 }
-        @r.b.fill { |i| {} }
-      end
-    end
-
-    describe 'flatten!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.flatten!
-        @r.b.flatten!
-      end
-    end
-
-    describe 'replace on an array value' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.replace([0, 0])
-        @r.b.replace([{}, {}])
-      end
-    end
-
-    describe 'insert on an array value' do
+    describe 'insert' do
       it 'should mark the propery and the record as dirty' do
         @r.a.insert(2, 0)
         @r.b.insert(2, {})
-      end
-    end
-
-    describe 'keep_if on an array value' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.keep_if { |x| x == 2 }
-        @r.b.keep_if { |x| x.empty? }
-      end
-    end
-
-    describe 'select!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.select! { |x| x == 2 }
-        @r.b.select! { |x| x.empty? }
-      end
-    end
-
-    describe 'pop on an array value' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.pop
-        @r.b.pop
-      end
-    end
-
-    describe 'push on an array value' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.push 4
-        @r.b.push({})
-      end
-    end
-
-    describe 'reverse!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.reverse!
-        @r.b.reverse!
-      end
-    end
-
-    describe 'rotate!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.rotate! 2
-        @r.b.rotate! 2
-      end
-    end
-
-    describe 'shuffle!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.shuffle!
-        @r.b.shuffle!
-      end
-    end
-
-    describe 'slice!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.slice! 1, 1
-        @r.b.slice! 1, 1
-      end
-    end
-
-    describe 'sort!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.sort!
-        @r.b = [] # can't sort hashes
-      end
-    end
-
-    describe 'sort_by!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.sort_by! { |x| x }
-        @r.b.sort_by! { |x| 1 }
-      end
-    end
-
-    describe 'uniq!' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.uniq!
-        @r.b.uniq!
-      end
-    end
-
-    describe 'unshift' do
-      it 'should mark the propery and the record as dirty' do
-        @r.a.unshift 0, 5
-        @r.b.unshift({}, {}, {})
       end
     end
 

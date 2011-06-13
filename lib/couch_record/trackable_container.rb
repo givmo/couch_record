@@ -64,58 +64,9 @@ module CouchRecord
         super
       end
 
-      def collect!
-        _track_change
-        super
-        _make_children_trackable
-      end
-
-      def map!
-        _track_change
-        super
-        _make_children_trackable
-      end
-
-      def compact!()
-        _track_change
-        super
-      end
-
       def delete_at(index)
         _track_change
         super
-      end
-
-      def delete(value)
-        _track_change
-        super
-      end
-
-      def delete_if
-        _track_change
-        super
-      end
-
-      def reject!
-        _track_change
-        super
-      end
-
-      def fill(*args)
-        _track_change
-        super
-        _make_children_trackable
-      end
-
-      def flatten!
-        _track_change
-        super
-      end
-
-      def replace(*args)
-        _track_change
-        super
-        _make_children_trackable
       end
 
       def insert(*args)
@@ -124,83 +75,12 @@ module CouchRecord
         _make_children_trackable
       end
 
-      def keep_if(*args)
-        _track_change
-        super
-      end
-
-      def select!(*args)
-        _track_change
-        super
-      end
-
-      def pop(*args)
-        _track_change unless self.empty?
-        super
-      end
-
-      def push(obj, *smth)
-        _track_change
-        super
-        _make_trackable obj
-        _make_trackable smth
-      end
-
-      def reverse!(*args)
-        _track_change
-        super
-      end
-
-      def rotate!(*args)
-        _track_change
-        super
-      end
-
-      def shuffle!(*args)
-        _track_change
-        super
-      end
-
-      def slice!(*args)
-        _track_change
-        super
-      end
-
-      def sort!(*args)
-        _track_change
-        super
-      end
-
-      def sort_by!(*args)
-        _track_change
-        super
-      end
-
-      def uniq!(*args)
-        _track_change
-        super
-      end
-
-      def unshift(obj, *smth)
-        _track_change
-        super
-        _make_trackable obj
-        _make_trackable smth
-      end
-
-
     end
 
     module TrackableHash
       include TrackableContainer
 
       def []=(key, value)
-        _make_trackable(value, key)
-        _track_change(key, value)
-        super
-      end
-
-      def store(key, value)
         _make_trackable(value, key)
         _track_change(key, value)
         super
@@ -215,45 +95,6 @@ module CouchRecord
         _track_change(key)
         super
       end
-
-      def delete_if
-        _track_change
-        super
-      end
-
-      def reject!
-        _track_change
-        super
-      end
-
-      def replace(other_hash)
-        _track_change
-        super
-        _make_children_trackable
-      end
-
-      def keep_if
-        _track_change
-        super
-      end
-
-      def select!
-        _track_change
-        super
-      end
-
-      def merge!(other_hash)
-        _track_change
-        super
-        _make_children_trackable
-      end
-
-      # We can't use update because we need it for persistence
-#      def update(other_hash)
-#        _track_change
-#        super
-#        _make_children_trackable
-#      end
 
     end
   end

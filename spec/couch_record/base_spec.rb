@@ -1,7 +1,4 @@
-require 'couchrest'
-require 'couchrest/rest_api'
-require 'couch_record'
-require 'rspec'
+require 'spec_helper'
 
 def check_values(a)
   a.s.should == @str_values[:s]
@@ -49,13 +46,6 @@ describe CouchRecord::Base do
     end
 
   end
-
-  before :each do
-    CouchRest.stub!(:put).and_return({'ok' => true, 'rev' => '1-12345', 'id' => '54321'})
-    CouchRest.stub!(:post).and_return({'ok' => true, 'rev' => '2-12345', 'id' => '54321'})
-    CouchRecord.server.stub!(:next_uuid).and_return('54321')
-  end
-
 
   describe 'property' do
 
