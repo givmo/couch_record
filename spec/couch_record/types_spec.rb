@@ -1,4 +1,4 @@
-describe 'CouchRecord::MassAssignmentSecurity' do
+describe 'CouchRecord::Types' do
   before :all do
     @attributes = {
         :t => '2011-06-12T16:14:12Z',

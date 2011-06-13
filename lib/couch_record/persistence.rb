@@ -14,7 +14,7 @@ module CouchRecord
           _do_save
         end
       end
-      @changed_attributes.clear
+      @changed_attributes.clear if @changed_attributes
     end
 
     def update(options = {})
@@ -27,7 +27,7 @@ module CouchRecord
           _do_save
         end
       end
-      @changed_attributes.clear
+      @changed_attributes.clear if @changed_attributes
     end
 
     def update_attributes(attributes)

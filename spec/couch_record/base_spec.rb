@@ -1,7 +1,6 @@
 require 'couchrest'
 require 'couchrest/rest_api'
 require 'couch_record'
-require 'bigdecimal'
 require 'rspec'
 
 def check_values(a)
@@ -20,10 +19,6 @@ def set_values(a)
   a.d = @str_values[:d]
   a.sym = @str_values[:sym]
   a.bd = @str_values[:bd]
-end
-
-def disable_save(a)
-#  a.stub_chain(:database, :save_doc).and_return({'ok' => true})
 end
 
 describe CouchRecord::Base do
@@ -95,7 +90,6 @@ describe CouchRecord::Base do
   describe 'persisted?' do
     it 'should return true for saved records and false for new ones' do
       a = Record.new
-      disable_save(a)
       a.persisted?.should == false
       a.create
       a.persisted?.should == true
@@ -113,7 +107,6 @@ describe CouchRecord::Base do
 
     it 'should set created_at and updated_at' do
       a = Record.new
-      disable_save(a)
 
       before_create = Time.iso8601(Time.now.utc.iso8601)
       a.create

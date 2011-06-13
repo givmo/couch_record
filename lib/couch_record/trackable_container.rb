@@ -25,7 +25,7 @@ module CouchRecord
       if value.is_a? TrackableContainer
         if self.is_a?(CouchRecord::Base)
           value.parent_record = self
-          value.parent_attr = attr.to_sym
+          value.parent_attr = attr && attr.to_sym
         else
           value.parent_record = self.parent_record
           value.parent_attr = self.parent_attr
