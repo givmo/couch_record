@@ -1,11 +1,19 @@
 # CouchRecord: A streamlined CouchDB ORM, using CouchRest
 
+[https://github.com/givmo/couch_record](https://github.com/givmo/couch_record)
+
+## History
+
+We built CouchRecord to use on Givmo ([https://www.givmo.com](https://www.givmo.com "Givmo")).  We were originally using
+CouchRest::Model, but ran into several issues with performance, memory leaks, Dirty support and Callbacks, so we decided to roll our own.
+
 ## Design goals
 
 - Be Fast - Your app has to map a lot of objects, so try to do as little as possible, especially when reading records from CouchDB
 - Be Simple - You're going to end up looking at (debugging into) your ORM when something's not working as you expect, so the less code there is and the easier it is to understnd, the better.
 - ActiveModel - Use ActiveModel modules wherever possible to support ActiveModel funcionality
-- Don't Support Everything - CouchReccord is not a drop in replacement for ActiveRecord, CouchRest::Model or anything else.
+- Don't Support Everything - CouchRecord is not a drop in replacement for ActiveRecord, CouchRest::Model or anything else.
+
 
 ## Installation
 
@@ -100,6 +108,18 @@ The example js file below will create a design doc with 2 views: `by_name` and `
         return sum(values);
     }
 
+If you dont' specify any reduce functions, a default view based on the file name is created.
+So in the common case where you want a simple finder method on a property :x, your js file would be
+
+    map = function(doc) {
+        emit(doc['x'], null);
+    };
+
+And you're model would specify:
+
+    property :x
+    find_by :x
+
 ### Deleting Design Docs
 
 When you delete a design doc, you want it to get deleted from all development, test, and production databases.
@@ -108,7 +128,7 @@ CouchRecord handles this by keeping a list of deleted files in Rails.root/db/del
     people/by_email.js
     items/by_category.js
 
-When you delete a design doc file from git, add it to thsi file so it gets removed from everyone's db when they migrate
+When you delete a design doc file from git, add it to this file so it gets removed from everyone's db when they migrate.
 
 ### Migrating
 
@@ -132,9 +152,18 @@ We don't clear the list of changed attributes until *after* all the after_* call
 This means you can easily see what's changed in your after_* callbacks instead of having to look in `previous_changes`.
 It also means if you change attribute values in your after_* callbacks, they won't get marked as dirty, so don't do that.
 
+The dirty methods also work with complex types (Array and Hash) and sub-models.  So if you do:
+
+    person.children[2].age = 10
+
+Then `person.children[2].age_changed?`,  `person.children_changed?`, and  `person.changed?` will all return true.
+No small feat.
+
 ### ActiveModel::Callbacks
 
 :before, :after, and :around for :create, :destroy, :save, and :update
+
+Callbacks for sub-models do not work.  The semantics of sub-model callbacks are a little murky.
 
 ### ActiveModel::Validations
 
