@@ -6,7 +6,9 @@ module CouchRecord
       def find(id)
         #TODO 2011-07-01 this is only necessary because old remember cookies store an array
         id = id[0] if id.is_a? Array
+
         database.get_type id, self
+      rescue RestClient::ResourceNotFound
       end
 
       alias_method :get, :find
