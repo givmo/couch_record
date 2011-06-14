@@ -117,6 +117,8 @@ describe CouchRecord::Base do
         property :a, MergeRecord
         property :b, [MergeRecord]
         property :c, Hash
+
+        attr_accessor :non_prop
       end
     end
 
@@ -157,6 +159,17 @@ describe CouchRecord::Base do
       @r.c[:d].y.should == 6
       @r.c[:e].x.should == 7
       @r.c[:e].y.should == 7
+    end
+
+    it 'should set non-propery attributes' do
+      @r.merge_attributes(
+          {
+              :x => 0,
+              :non_prop => 1
+          })
+
+      @r.x.should == 0
+      @r.non_prop.should == 1
     end
   end
 

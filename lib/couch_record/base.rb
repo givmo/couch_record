@@ -91,7 +91,11 @@ module CouchRecord
     def merge_attributes(attributes)
       attributes = self.sanitize_for_mass_assignment(attributes) unless @_raw
       attributes.each_pair do |attr, value|
-        self.send("#{attr}_merge", value)
+        if self.respond_to? "#{attr}_merge"
+          self.send("#{attr}_merge", value)
+        else
+          self.send("#{attr}=", value)
+        end
       end
     end
 
@@ -119,6 +123,9 @@ module CouchRecord
 
       def property(attr, type = String, options = {})
         _defaulted_properties << attr if options.has_key?(:default)
+
+        attr_accessible attr if options[:accessible]
+        attr_protected attr if options[:protected]
 
         define_method(attr) do
           _raw do

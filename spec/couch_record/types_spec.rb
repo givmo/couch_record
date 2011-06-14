@@ -16,6 +16,7 @@ describe 'CouchRecord::Types' do
       property :i, Integer
       property :t, Time
       property :d, Date
+      property :b, TrueClass
       property :sym, Symbol
       property :bd, BigDecimal
       property :defaulted, String, :default => 'a default'
@@ -54,6 +55,23 @@ describe 'CouchRecord::Types' do
       check_types(r)
     end
 
+  end
+
+  describe 'setting booleans' do
+    it 'should convert string values to booleans' do
+      r = Record.new
+      r.b.should == nil
+      r.b = 'true'
+      r.b.should == true
+      r.b = 'false'
+      r.b.should == false
+      r.b = ''
+      r.b.should == nil
+      r.b = '1'
+      r.b.should == true
+      r.b = '0'
+      r.b.should == false
+    end
   end
 
 end

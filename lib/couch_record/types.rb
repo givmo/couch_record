@@ -21,6 +21,14 @@ module CouchRecord
         Date.iso8601 value
       elsif type == Integer
         value.to_i
+      elsif type == TrueClass
+        if value == ''
+          nil
+        elsif value == '0' || value == 'false'
+          false
+        else
+          true
+        end
       elsif type < CouchRecord::Base
         type.new value, :parent_record => self, :raw => @_raw
       else
