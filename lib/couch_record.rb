@@ -12,6 +12,8 @@ module CouchRecord
   autoload :OrmAdapter, 'couch_record/orm_adapter'
   autoload :TrackableContainer, 'couch_record/trackable_container'
 
+  require 'couch_record/core_extensions/hash'
+
   require 'bigdecimal'
   require 'couch_record/railtie' if defined?(Rails)
 
