@@ -1,6 +1,8 @@
 require 'couchrest'
 require 'active_model'
 
+require 'couch_record/core_extensions/hash'
+
 module CouchRecord
   autoload :Base, 'couch_record/base'
   autoload :Types, 'couch_record/types'
@@ -11,8 +13,6 @@ module CouchRecord
   autoload :Associations, 'couch_record/associations'
   autoload :OrmAdapter, 'couch_record/orm_adapter'
   autoload :TrackableContainer, 'couch_record/trackable_container'
-
-  require 'couch_record/core_extensions/hash'
 
   require 'bigdecimal'
   require 'couch_record/railtie' if defined?(Rails)
