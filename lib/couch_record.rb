@@ -1,8 +1,6 @@
 require 'couchrest'
 require 'active_model'
 
-require 'couch_record/core_extensions/hash'
-
 module CouchRecord
   autoload :Base, 'couch_record/base'
   autoload :Types, 'couch_record/types'
@@ -29,5 +27,12 @@ module CouchRecord
         CouchRest.new url
       end
     end
+  end
+end
+
+class Hash
+  def self.===(other)
+    return false if self == Hash && other.is_a?(CouchRecord::Base)
+    super
   end
 end
