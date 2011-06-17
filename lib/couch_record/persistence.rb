@@ -8,26 +8,37 @@ module CouchRecord
 
     def create(options = {})
       return false if options[:validate] != false && !valid?
+
+      result = false
+
       _run_create_callbacks do
         _run_save_callbacks do
           set_timestamps(:create)
-          _do_save
+          result = _do_save
         end
       end
-      @changed_attributes.clear if @changed_attributes
+
+      @changed_attributes.clear if @changed_attributes && result
+
+      result
     end
 
     def update(options = {})
       return false if options[:validate] != false && !self.valid?
 
+      result = false
+
       _run_update_callbacks do
         _run_save_callbacks do
           return true if options[:force] != true && !self.changed?
           set_timestamps
-          _do_save
+          result = _do_save
         end
       end
-      @changed_attributes.clear if @changed_attributes
+
+      @changed_attributes.clear if @changed_attributes && result
+
+      result
     end
 
     def update_attributes(attributes)
