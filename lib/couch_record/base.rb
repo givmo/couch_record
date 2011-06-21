@@ -54,7 +54,7 @@ module CouchRecord
 
     def to_key
       # this is a hack for FormHelper because it expects an Array
-      JoinableString.new id
+      id && JoinableString.new id
     end
 
     # Returns a string representing the object's key suitable for use in URLs,
