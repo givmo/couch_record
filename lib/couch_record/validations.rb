@@ -17,8 +17,9 @@ module CouchRecord
 
     class UniquenessValidator < ActiveModel::EachValidator
       def validate_each(record, attribute, value)
-        results = record.class.send("view_by_#{attribute}", value, :singular => false, :limit => 2)
-        results.empty? || ( results.length == 1 && results[0]['id'] == record.id)
+        results = record.class.send("view_by_#{attribute}", value, :include_docs => false, :singular => false, :limit => 2)
+        return if results.empty? || ( results.length == 1 && results[0]['id'] == record.id)
+        record.errors.add(attribute, :taken, {:value => value})
       end
     end
   end
