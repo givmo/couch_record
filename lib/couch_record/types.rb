@@ -40,7 +40,7 @@ module CouchRecord
 
     def convert_for_save
       _raw do
-        self.class._convert_for_save(self)
+        self.merge!(self) { |key, subval, subval2| _convert_for_save(subval) }
       end
     end
 
@@ -56,12 +56,12 @@ module CouchRecord
         elsif value.is_a?(BigDecimal)
           value.to_s('F')
         elsif value.is_a?(Array)
-          value.map! { |subval| convert_for_save(subval) }
+          value.map! { |subval| _convert_for_save(subval) }
         elsif value.is_a?(CouchRecord::Base)
           value.convert_for_save
           value
         elsif value.is_a?(Hash)
-          value.merge!(value) { |key, subval, subval2| convert_for_save(subval) }
+          value.merge!(value) { |key, subval, subval2| _convert_for_save(subval) }
         else
           value.to_s
         end
