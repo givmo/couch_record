@@ -36,7 +36,13 @@ module CouchRecord
       end
     end
 
-    def convert_for_save(value)
+    def convert_for_save
+      _raw do
+        _convert_for_save(self)
+      end
+    end
+
+    def _convert_for_save(value)
       if value.nil? || value.is_a?(String) || value.is_a?(Integer) || value.is_a?(TrueClass) || value.is_a?(FalseClass)
         value
       elsif value.is_a?(Time)
@@ -47,6 +53,9 @@ module CouchRecord
         value.to_s('F')
       elsif value.is_a?(Array)
         value.map! { |subval| convert_for_save(subval) }
+      elsif value.is_a?(CouchRecord::Base)
+        value.convert_for_save
+        value
       elsif value.is_a?(Hash)
         value.merge!(value) { |key, subval, subval2| convert_for_save(subval) }
       else

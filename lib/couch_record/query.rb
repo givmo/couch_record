@@ -48,9 +48,11 @@ module CouchRecord
           end
         end
 
-        if params.delete(:case_insensitive)
-          [:key, :startkey, :endkey].each do |key|
-            params[key].downcase! if params.has_key? key
+        case_insensitive = params.delete(:case_insensitive)
+        [:key, :startkey, :endkey].each do |key|
+          if params.has_key? key
+            params[key] = _convert_for_save(params[key])
+            params[key].downcase! if case_insensitive
           end
         end
 
