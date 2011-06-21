@@ -3,6 +3,8 @@ module CouchRecord
   # Array, Hash
 
   module Types
+    extend ActiveSupport::Concern
+
     def convert_to_type(value, type)
       if value.nil? || value == true || value == false ||
           (type.is_a?(Array) && value[0].is_a?(type[0])) ||
@@ -38,30 +40,33 @@ module CouchRecord
 
     def convert_for_save
       _raw do
-        _convert_for_save(self)
+        self.class._convert_for_save(self)
       end
     end
 
-    def _convert_for_save(value)
-      if value.nil? || value.is_a?(String) || value.is_a?(Integer) || value.is_a?(TrueClass) || value.is_a?(FalseClass)
-        value
-      elsif value.is_a?(Time)
-        value.utc.iso8601
-      elsif value.is_a?(Date)
-        value.iso8601
-      elsif value.is_a?(BigDecimal)
-        value.to_s('F')
-      elsif value.is_a?(Array)
-        value.map! { |subval| convert_for_save(subval) }
-      elsif value.is_a?(CouchRecord::Base)
-        value.convert_for_save
-        value
-      elsif value.is_a?(Hash)
-        value.merge!(value) { |key, subval, subval2| convert_for_save(subval) }
-      else
-        value.to_s
-      end
-    end
+    module ClassMethods
 
+      def _convert_for_save(value)
+        if value.nil? || value.is_a?(String) || value.is_a?(Integer) || value.is_a?(TrueClass) || value.is_a?(FalseClass)
+          value
+        elsif value.is_a?(Time)
+          value.utc.iso8601
+        elsif value.is_a?(Date)
+          value.iso8601
+        elsif value.is_a?(BigDecimal)
+          value.to_s('F')
+        elsif value.is_a?(Array)
+          value.map! { |subval| convert_for_save(subval) }
+        elsif value.is_a?(CouchRecord::Base)
+          value.convert_for_save
+          value
+        elsif value.is_a?(Hash)
+          value.merge!(value) { |key, subval, subval2| convert_for_save(subval) }
+        else
+          value.to_s
+        end
+      end
+
+    end
   end
 end
