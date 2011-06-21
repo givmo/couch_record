@@ -52,7 +52,7 @@ module CouchRecord
         [:key, :startkey, :endkey].each do |key|
           if params.has_key? key
             params[key] = _convert_for_save(params[key])
-            params[key].downcase! if case_insensitive
+            params[key] = params[key].downcase if case_insensitive
           end
         end
 
