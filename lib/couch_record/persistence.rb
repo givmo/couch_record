@@ -64,7 +64,7 @@ module CouchRecord
     def _do_save
       # set any defaults
       self.class._defaulted_properties.each { |attr| self.send(attr) }
-      convert_for_save(self)
+      self.convert_for_save
       result = database.save_doc(self)
       result['ok']
     end
