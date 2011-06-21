@@ -40,7 +40,7 @@ module CouchRecord
 
     def convert_for_save
       _raw do
-        self.merge!(self) { |key, subval, subval2| _convert_for_save(subval) }
+        self.merge!(self) { |key, subval, subval2| self.class._convert_for_save(subval) }
       end
     end
 
