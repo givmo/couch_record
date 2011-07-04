@@ -47,9 +47,14 @@ module CouchRecord
     module TrackableArray
       include TrackableContainer
 
-      def []=(index, value)
+      def []=(*args)
+        value = args.last
+        index = args.length == 2 ? args[0] : args[0..1]
         _make_trackable(value)
-        _track_change
+        if (index.is_a?(Array) && self[index[0], index[1]] != value) ||
+            (!index.is_a?(Array) && self[index] != value)
+          _track_change
+        end
         super
       end
 
@@ -65,7 +70,7 @@ module CouchRecord
       end
 
       def delete_at(index)
-        _track_change
+        _track_change if (0..self.length-1).include? index
         super
       end
 
@@ -75,6 +80,129 @@ module CouchRecord
         _make_children_trackable
       end
 
+      def map!
+        block_given? or return enum_for(__method__)
+        each_with_index { |v, i| self[i] = yield(v) }
+        self
+      end
+      alias :collect! :map!
+
+      def compact!
+        result = super
+        _track_change unless result.nil?
+        result
+      end
+
+      def delete(value)
+        result = super
+        _track_change unless result.nil?
+        result
+      end
+
+      def delete_if
+        block_given? or return enum_for(__method__)
+        each_with_index { |v, i| delete_at(i) if yield(v) }
+        self
+      end
+
+      def reject!
+        block_given? or return enum_for(__method__)
+        l = self.length
+        each_with_index { |v, i| delete_at(i) if yield(v) }
+        l == self.length ? nil : self
+      end
+
+      def fill(*args)
+        old = self.clone
+        super
+        _track_change unless old == self
+        _make_children_trackable
+      end
+
+      def flatten!(*args)
+        result = super
+        _track_change unless result.nil?
+        result
+      end
+
+      def replace(*args)
+        old = self.clone
+        super
+        _track_change unless old == self
+        _make_children_trackable
+      end
+
+      def keep_if
+        block_given? or return enum_for(__method__)
+        each_with_index { |v, i| delete_at(i) unless yield(v) }
+        self
+      end
+
+      def select!
+        block_given? or return enum_for(__method__)
+        l = self.length
+        each_with_index { |v, i| delete_at(i) unless yield(v) }
+        l == self.length ? nil : self
+      end
+
+      def pop(*args)
+        _track_change unless self.empty?
+        super
+      end
+
+      def push(obj, *smth)
+        _track_change
+        super
+        _make_trackable obj
+        _make_trackable smth
+      end
+
+      def reverse!(*args)
+        _track_change
+        super
+      end
+
+      def rotate!(*args)
+        _track_change
+        super
+      end
+
+      def shuffle!(*args)
+        _track_change
+        super
+      end
+
+      def slice!(*args)
+        result = super
+        _track_change unless result.nil? || result.empty?
+        result
+      end
+
+      def sort!
+        old = self.clone
+        super
+        _track_change unless old == self
+      end
+
+      def sort_by!
+        old = self.clone
+        super
+        _track_change unless old == self
+      end
+
+      def uniq!
+        result = super
+        _track_change unless result.nil?
+        result
+      end
+
+      def unshift(obj, *smth)
+        _track_change
+        super
+        _make_trackable obj
+        _make_trackable smth
+      end
+
     end
 
     module TrackableHash
@@ -82,19 +210,66 @@ module CouchRecord
 
       def []=(key, value)
         _make_trackable(value, key)
-        _track_change(key, value)
+        _track_change(key, value) unless value == self[key]
         super
       end
 
+      alias :store :[]=
+
       def clear
-        _track_change
+        _track_change unless self.empty?
         super
       end
 
       def delete(key)
-        _track_change(key)
+        _track_change(key) if self.has_key? key
         super
       end
+
+      def delete_if
+        block_given? or return enum_for(__method__)
+        self.each_pair { |key, value| self.delete(key) if yield(key, value) }
+        self
+      end
+
+      def reject!
+        block_given? or return enum_for(__method__)
+        n = size
+        delete_if { |key, value| yield(key, value) }
+        size == n ? nil : self
+      end
+
+      def replace(other_hash)
+        _track_change
+        super
+        _make_children_trackable
+      end
+
+      def keep_if
+        block_given? or return enum_for(__method__)
+        self.each_pair { |key, value| self.delete(key) unless yield(key, value) }
+        self
+      end
+
+      def select!
+        block_given? or return enum_for(__method__)
+        n = size
+        keep_if { |key, value| yield(key, value) }
+        size == n ? nil : self
+      end
+
+      def merge!(other_hash)
+        self.each_pair do |key, value|
+          if other_hash.has_key? key
+            new_value = block_given? ? yield(key, value, other_hash[key]) : other_hash[key]
+            self[key] = new_value
+          end
+        end
+        self
+      end
+
+      alias :update :merge!
+
 
     end
   end
