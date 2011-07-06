@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_dependency "activemodel"
-  s.add_dependency "couchrest"
+  s.add_dependency "couchrest", '~> 1.0.2'
 
   s.add_development_dependency(%q<rspec>)
 end
