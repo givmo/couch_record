@@ -94,6 +94,7 @@ module CouchRecord
         if self.respond_to? "#{attr}_merge"
           self.send("#{attr}_merge", value)
         else
+          # this is needed for attrs that aren't CouchRecord properties
           self.send("#{attr}=", value)
         end
       end
@@ -146,11 +147,22 @@ module CouchRecord
 
         define_method("#{attr}_merge") do |value|
           current = self.send attr
-          if current && value && !type.is_a?(Array) && type < CouchRecord::Base
+          if current && value && type.is_a?(Class) && type < CouchRecord::Base
             current.merge_attributes(value)
-          elsif current && value && type.is_a?(Array) && type[0] < CouchRecord::Base
-            value.each_with_index do |subval, i|
-              if current[i] && subval
+          elsif current && value && type.is_a?(Array)
+            # deal with array attrs being pass as hashes, like when we use FormHelper
+            if value.is_a?(Array)
+              #trim the current set of values if there are more than the new set
+              current.slice!(value.length..-1)
+              enum = value.each_index
+            else
+              enum = value.each_key
+            end
+
+            enum.each do |key|
+              subval = value[key]
+              i = key.to_i
+              if current[i] && subval && type[0] < CouchRecord::Base
                 current[i].merge_attributes(subval)
               else
                 current[i] = convert_to_type(subval, type[0])
@@ -169,6 +181,12 @@ module CouchRecord
           end
 
           self[attr]
+        end
+
+        if type.is_a?(Array) && type[0] < CouchRecord::Base
+          define_method("#{attr}_attributes=") do |attributes|
+            self.send("#{attr}_merge", attributes)
+          end
         end
 
         define_method("#{attr}_changed?") do

@@ -99,17 +99,18 @@ module CouchRecord
         result
       end
 
-      def delete_if
+      def delete_if(&block)
         block_given? or return enum_for(__method__)
-        each_with_index { |v, i| delete_at(i) if yield(v) }
+        reject! &block
         self
       end
 
-      def reject!
+      def reject!(&block)
         block_given? or return enum_for(__method__)
-        l = self.length
-        each_with_index { |v, i| delete_at(i) if yield(v) }
-        l == self.length ? nil : self
+        delete_indexes = []
+        each_with_index { |v, i| delete_indexes << i if yield(v) }
+        delete_indexes.reverse_each { |i| self.delete_at(i)}
+        delete_indexes.empty? ? self : nil
       end
 
       def fill(*args)
@@ -267,9 +268,6 @@ module CouchRecord
         end
         self
       end
-
-      alias :update :merge!
-
 
     end
   end
