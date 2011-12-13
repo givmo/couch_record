@@ -3,7 +3,7 @@ PATH
   specs:
     couch_record (0.0.1)
       activemodel
-      couchrest
+      couchrest (~> 1.0.2)
 
 GEM
   remote: http://rubygems.org/
@@ -39,5 +39,5 @@ PLATFORMS
 DEPENDENCIES
   activemodel
   couch_record!
-  couchrest
+  couchrest (~> 1.0.2)
   rspec

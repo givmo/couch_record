@@ -14,6 +14,8 @@ module CouchRecord
     extend ActiveModel::Callbacks
     define_model_callbacks :create, :destroy, :save, :update
 
+    class_attribute :_save_timestamps
+
     def initialize(attributes = nil, options = nil)
       if options && options[:parent_record]
         self.parent_record = options[:parent_record]
@@ -208,13 +210,9 @@ module CouchRecord
       end
 
       def timestamps!
-        @_save_timestamps = true
+        self._save_timestamps = true
         property :created_at, Time
         property :updated_at, Time
-      end
-
-      def _save_timestamps?
-        @_save_timestamps
       end
 
       def _defaulted_properties
