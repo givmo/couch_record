@@ -17,29 +17,15 @@ namespace :couch_record do
           couchdb_design_doc = db_conn.get("_design/#{design_doc_name}") rescue nil
         end
 
-        parser = ViewParser.new(design_doc_file)
-        parser.views[design_doc_name] = nil if parser.views.empty?
-
-        parser.views.each do |name, function|
-          views[name] = {}
-          views[name]['map'] = parser.map
-          views[name]['reduce'] = function unless function.nil?
-        end
-
-        # new design doc?
-        if couchdb_design_doc.nil?
-          couchdb_design_doc = {
-              "_id" => "_design/#{design_doc_name}",
-              'language' => 'javascript'
-          }
-        end
-
-        if couchdb_design_doc['views'] == views
-          puts "Ignoring unchanged views in #{db_name}/#{design_doc_name}\n"
-          next
+        file_extension = File.extname(design_doc_file)
+        if file_extension == '.js'
+          parser = ViewParser.new(design_doc_file, design_doc_name, couchdb_design_doc)
         else
-          couchdb_design_doc['views'] = views
-          db_conn.save_doc(couchdb_design_doc)
+          parser = NoopParser.new(design_doc_file, design_doc_name, couchdb_design_doc)
+        end
+
+        if parser.changed
+          db_conn.save_doc(parser.doc)
           puts "Pushed views to #{db_name}/#{design_doc_name}: #{views.keys.join(', ')}\n"
         end
 
@@ -69,12 +55,26 @@ def derive_design_doc_name(design_doc_file)
   File.basename(design_doc_file, File.extname(design_doc_file))
 end
 
-class ViewParser
-  attr_reader :map
-  attr_reader :views
+class NoopParser
+  attr_reader :changed
+  attr_reader :doc
 
-  def initialize(filename)
-    @views = {}
+  def initialize(filename, design_doc_name, couchdb_design_doc)
+    @doc = JSON.parse(File.read(filename))
+    @doc['_id'] = "_design/#{design_doc_name}"
+    @doc['_rev'] = couchdb_design_doc['_rev'] if couchdb_design_doc
+    @changed = (@doc['views'] != couchdb_design_doc['views'])
+  end
+  
+end
+
+class ViewParser
+  attr_reader :changed
+  attr_reader :doc
+
+  def initialize(filename, design_doc_name, couchdb_design_doc)
+    @doc = couchdb_design_doc
+    views = {}
 
     file = File.open(filename)
     while start_line = get_next_start_line(file)
@@ -92,11 +92,31 @@ class ViewParser
 
 #          puts "#{name} = #{function}"
       if (name == 'map')
-        @map = function
+        map = function
       else
-        @views[name] = function
+        views[name] = function
       end
     end
+
+    views[design_doc_name] = nil if views.empty?
+
+    views.merge!(views) do |name, function, x|
+      view = {'map' => map}
+      view['reduce'] = function unless function.nil?
+      view
+    end
+
+    # new design doc?
+    if @doc.nil?
+      @doc = {
+          "_id" => "_design/#{design_doc_name}",
+          'language' => 'javascript'
+      }
+    end
+
+    @changed = (@doc['views'] != views)
+    @doc['views'] = views
+
   end
 
   protected

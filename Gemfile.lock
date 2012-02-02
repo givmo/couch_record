@@ -37,7 +37,5 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activemodel
   couch_record!
-  couchrest (~> 1.0.2)
   rspec
