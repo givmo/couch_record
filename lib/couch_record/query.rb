@@ -15,12 +15,15 @@ module CouchRecord
         define_singleton_method method_name do |*args|
           view_path, params = _merge_options(args, base_opts)
           convert = params.delete :convert
+          value_only = params.delete :value_only
           singular = params.delete :singular
           params[:limit] = 1 if singular
 
           results = database.view(view_path, params)['rows']
           if convert
             results.map! { |row| self.new(row['doc'], :raw => true) }
+          elsif value_only
+            results.map! {|row| row['value'] }
           end
 
           results = results.first if singular
