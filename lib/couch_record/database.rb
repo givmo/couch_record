@@ -13,5 +13,12 @@ module CouchRecord
       doc.database = self
       doc
     end
+
+    def search(params={})
+      # -> http://localhost:5984/yourdb/_fti/YourDesign/by_name?include_docs=true&q=plop*'
+      url = CouchRest.paramify_url "#{root}/_search", params
+      CouchRest.get url
+    end
+
   end
 end

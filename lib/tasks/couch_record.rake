@@ -26,7 +26,7 @@ namespace :couch_record do
 
         if parser.changed
           db_conn.save_doc(parser.doc)
-          puts "Pushed views to #{db_name}/#{design_doc_name}: #{views.keys.join(', ')}\n"
+          puts "Pushed views to #{db_name}/#{design_doc_name}\n"
         end
 
       end
