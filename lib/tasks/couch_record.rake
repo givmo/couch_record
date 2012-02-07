@@ -62,8 +62,12 @@ class NoopParser
   def initialize(filename, design_doc_name, couchdb_design_doc)
     @doc = JSON.parse(File.read(filename))
     @doc['_id'] = "_design/#{design_doc_name}"
-    @doc['_rev'] = couchdb_design_doc['_rev'] if couchdb_design_doc
-    @changed = (@doc['views'] != couchdb_design_doc['views'])
+    @changed = true
+
+    if couchdb_design_doc
+      @doc['_rev'] = couchdb_design_doc['_rev']
+      @changed = (@doc['views'] != couchdb_design_doc['views'])
+    end
   end
   
 end
